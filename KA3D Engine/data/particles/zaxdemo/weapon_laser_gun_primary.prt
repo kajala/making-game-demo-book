@@ -1,0 +1,205 @@
+-- ******Particle*******
+-- 
+-- Domains are created by following functions,
+-- see below for usage examples:
+--
+-- Constant( x )
+--
+-- Infinity()
+--
+-- Range( begin, end )
+--
+-- Point( x,y,z )
+--
+-- Sphere( x,y,z, inradius,outradius )
+--
+-- Line( x1,y1,z1, x2,y2,z2 )
+--
+-- Box( minx,miny,minz, maxx,maxy,maxz )
+--
+-- Cylinder( x1,y1,z1, x2,y2,z2, inradius, outradius )
+--
+-- Disk( ox,oy,oz, nx,ny,nz, inradius, outradius )
+--
+-- Rectangle( ox,oy,oz, ux,uy,uz, vx,vy,vz )
+--
+-- Triangle( vx0,vy0,vz0, vx1,vy1,vz1, vx2,vy2,vz2 )
+--
+-- where:
+-- inradius    = min radius in which particles are born
+-- outradius   = max radius in which particles are born
+-- x1,y1,z1    = start Point coordinates
+-- x2,y2,z2    = end Point coordinates
+-- ox,oy,oz    = origin coordinates
+-- nx,ny,nz    = plane normal coordinates
+-- ux,uy,uz    = vector from origin to 'horizontal' edge
+-- vx,vy,vz    = vector from origin to 'vertical' edge
+-- vx0,vy0,vz0 = first vertex of Triangle
+-- vx1,vy1,vz1 = second vertex of Triangle
+-- vx2,vy2,vz2 = third vertex of Triangle
+--
+
+
+-----------------------------------------------------------
+-- Helper functions for particle domain table definition --
+-----------------------------------------------------------
+
+function Constant( c )											return {"CONSTANT", c} end
+function Infinity()												return Constant(-1) end
+function Range( x0,x1 )											return {"RANGE", x0,x1}	end
+function Point( x,y,z )											return {"POINT", x,y,z} end
+function Sphere( x,y,z, inradius,outradius )					return { "SPHERE", x,y,z, inradius,outradius } end
+function Line( x1,y1,z1, x2,y2,z2 )								return { "LINE", x1,y1,z1, x2,y2,z2 } end
+function Box( x1,y1,z1, x2,y2,z2 )								return {"BOX", x1,y1,z1, x2,y2,z2} end
+function Cylinder( x1,y1,z1, x2,y2,z2, inradius, outradius )	return { "CYLINDER", x1,y1,z1, x2,y2,z2, inradius, outradius } end
+function Disk( ox,oy,oz, nx,ny,nz, inradius, outradius )		return { "DISK", ox,oy,oz, nx,ny,nz, inradius, outradius } end
+function Rectangle( ox,oy,oz, ux,uy,uz, vx,vy,vz )				return { "RECTANGLE", ox,oy,oz, ux,uy,uz, vx,vy,vz } end
+function Triangle( vx0,vy0,vz0, vx1,vy1,vz1, vx2,vy2,vz2 )		return { "TRIANGLE", vx0,vy0,vz0, vx1,vy1,vz1, vx2,vy2,vz2 } end
+
+
+-----------------------
+-- System properties --
+-----------------------
+
+-- Maximum number of simultaneous emissions
+SystemMaxEmissions = 1
+
+-- How emission limit is maintained: kill NONE, OLDEST, RANDOM
+SystemLimitKill = "NONE"
+
+-- Number of new emissions / second
+SystemRate = Constant(100) -- to lit it up fast
+
+-- Time after no more new emissions are launched
+SystemStopTime = Infinity()
+
+-- Lifetime of the whole system
+SystemLifeTime = Infinity()
+
+
+----------------------------------
+-- Particle emission properties --
+----------------------------------
+
+-- Maximum number of particles simultanously
+EmissionMaxParticles = 150
+
+-- How max particle limit is maintained: kill NONE, OLDEST, RANDOM
+EmissionLimitKill = "RANDOM"
+
+-- Emission rate, particles/second
+EmissionRate = Range(250,300)
+
+-- Time after no more new particles are emitted
+EmissionStopTime = Infinity()
+
+-- Lifetime of particle emitter
+EmissionLifeTime = Infinity()
+
+-- Pivot point for the emissions
+EmissionPosition = Point(0,0,0)
+
+
+-------------------------
+-- Particle properties --
+-------------------------
+
+-- Particle life time in seconds
+ParticleLifeTime = Range(.4,2)
+
+-- If true then particles are updated even though they are not visible.
+-- Note: Normally this should be set to false
+ParticleUpdateAlways = false
+
+-- Volume in which the particles are born
+ParticleStartPosition = Sphere( 0,0,0, 0,0 )
+
+--
+-- Domain for velocity vector values
+-- This works the same way as with position,
+-- but instead of randomizing initial positions
+-- for the particles this time velocity vectors are 
+-- randomized so that the length and direction
+-- of the velocity is randomized from the specified
+-- domain when the velocity vector is considered to
+-- start at origin.
+--
+ParticleStartVelocity = Sphere( 0.1,0.1,0.1, 0.2,0.3 )
+
+-- Start size of particle
+ParticleStartSize = Range(.05,.08)
+
+-- Life time end size of particle
+ParticleEndSize = Range(.05,.08)
+
+-- Start color (R,G,B in range 0-1) of particle
+ParticleStartColor = Box(1,1,1, 1,1,1)
+
+-- End color (R,G,B in range 0-1) of particle
+ParticleEndColor = Box(.3,.3,1, .3,.3,1)
+
+-- Start opacity of particle
+ParticleStartAlpha = Constant(1)
+
+-- End opacity of particle
+ParticleEndAlpha = Constant(0)
+
+-- Particle sprite elasticity wrt particle velocity, set Constant(0) to disable
+-- (note that elasticity and rotation are mutually exclusive)
+ParticleSpriteElasticity = Constant(0)
+
+-- Particle sprite initial rotation (degrees)
+-- (note that elasticity and rotation are mutually exclusive)
+ParticleSpriteRotation = Range(0,360)
+
+-- Particle sprite initial rotation speed (degrees/sec)
+ParticleSpriteStartRotationSpeed = Range(-360,360)
+
+-- Particle sprite end rotation speed (degrees/sec)
+ParticleSpriteEndRotationSpeed = Constant(0)
+
+
+-------------------------------
+-- Particle bitmap animation --
+-------------------------------
+
+--
+-- View mode: CAMERAUP, WORLDUP
+--
+-- View mode defines are particles rotated when camera rotates along Z-axis.
+-- If view mode is WORLDUP, then particle 'up' direction is the same as world Y-axis.
+-- If view mode is CAMERAUP, then particle 'up' direction is the same as camera Y-axis.
+--
+-- Note: View mode does not affect if ParticleSpriteElasticity is set as
+-- it particle sprite elasticity defines the 'up' direction based on particle velocity
+--
+TextureView = "WORLDUP"
+
+-- Texture bitmap
+Texture = "textures/lightbeam.png"
+
+-- Number of frames embedded to texture (nxn grid)
+TextureFrames = 1
+
+-- Method of selecting which frame to display:
+-- LOOP plays back animation in Constant frame rate (TextureFramerate)
+-- LIFE starts from first frame and gradually animates until end-of-life
+-- RANDOM selects random frame in interval defined by TextureFramerate
+TextureAnimation = "LIFE"
+
+-- Playback rate if TextureAnimation is LOOP
+TextureFramerate = 10
+
+-- Shader
+Shader = "sprite-add"
+
+
+--------------------------------------
+-- World forces affecting particles --
+--------------------------------------
+
+-- Gravity affecting particles (m/s^2)
+Gravity = 0.5
+
+-- Wind affecting particles (m/s)
+Wind = {1,.1,0}

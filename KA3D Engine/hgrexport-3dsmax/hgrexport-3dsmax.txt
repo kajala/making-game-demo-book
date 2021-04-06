@@ -1,0 +1,331 @@
+hgr export for 3dsmax, version 1.0
+----------------------------------
+
+
+Supported 3dsmax versions
+-------------------------
+
+3dsmax 5.1: hgrexport-max5.dle
+3dsmax 6.0: hgrexport-max6.dle
+3dsmax 7.0: hgrexport-max7.dle
+
+
+Install
+-------
+
+1) Copy -maxX version specific plugin to 
+   3dsmaxX\plugins directory
+   
+2) Copy DevIL.dll (image loading library) to PATH, e.g.
+   C:\windows\system32 directory.
+
+
+Overview
+--------
+
+hgrexport is export class plugin for 3dsmax.
+It writes scene hierarchy, geometry, materials and 
+key framed animations to single scene hgr file.
+
+
+Export dialog
+-------------
+
+Scale world units to meters:
+- Scales temporarily all objects to metric system
+
+Copy textures to output path:
+- Copies textures used in the scene to the same 
+  directory where the scene file is exported
+
+Animation only:
+- Export only animation data. Useful mainly with character animations.
+
+Animation sample rate (Hz):
+- Defines initial sampling rate for key frame transformation animation 
+  data. After this initial sampling, the data is optimized.
+
+Default shaders:
+- Default shaders can be assigned by material channel usage,
+  so that different channel combinations can be assigned 
+  different shaders. Good for 'random scenes' which don't
+  have shaders assigned (using DirectX 9 Shader material)
+  
+Fog checkbox:
+- Linear fog enabled/disabled
+
+Fog start distance:
+- Linear fog start distance relative to camera. Can be negative.
+
+Fog end distance:
+- Linear fog maximum distance relative to camera.
+
+Lightmaps, Direct lLighting:
+- Bake direct lighting to lightmaps. 
+  Can be combined with 'Ambient occlusion'.
+
+Lightmaps, Ambient occlusion:
+- Bake ambient occlusion factor to lightmaps. 
+  Can be combined with 'Direct Lighting'.
+  
+Lightmaps, Unoccluded distance:
+- Distance which is consider unoccluded by the 
+  ambient occlusion factor ray-tracing.
+  
+Lightmaps, Texel size:
+- Size of single lightmap texel in world space coordinates
+  (smaller texel in world space -> more lightmap data)
+
+Lightmaps, Rays / texel:
+- Number of rays used to find out ambient occlusion factor
+
+
+Lightmaps
+---------
+
+Lightmapping, when enabled, is done by default to all objects.
+
+Lightmapping can be disable per-object basis by
+setting 'Receive shadows' check box disabled from
+'Edit -> Object Properties'.
+
+If object is not supposed to cast shadow then disable
+'Cast shadows' check box from 'Edit -> Object Properties'.
+
+
+Normal mapping
+--------------
+
+Be sure that your normal maps axis matches
+engine/3dsmax conventions. If you create normal maps
+from height maps with NVidia Photoshop plugin,
+you need to 'Invert Y' option.
+
+
+Position, rotation and scale animations
+---------------------------------------
+
+Transformation animations are extracted by re-sampling,
+so any controller can be used to animate objects.
+
+
+Skinned characters
+------------------
+
+Character skinning information is extracted both from 
+Character Studio Physique modifier and 3dsmax Skin modifier.
+
+
+Materials, shaders and lights
+-----------------------------
+
+Preferred way to set materials to objects is to
+use 'DirectX 9 Shader' material type in 3dsmax.
+Standard material is also supported as legacy option.
+
+Multi-Sub Object Material is also supported when
+multiple DX Materials / Standard materials are needed
+to be used in one object. So each exported object must 
+use either DX Material, Standard material or 
+Multi-Sub Object material, which has DX/Standard materials
+as sub materials.
+
+
+3dsmax Standard Material specific issues
+----------------------------------------
+
+Note: These issues are ONLY concern to you if you use
+Standard Material in 3dsmax. Preferred way is to use
+'DirectX 9 Shader' material type.
+
+Shaders can be set to Standard material either by
+a) Setting default shaders in export dialog
+b) FX=<shader name> tag in material name
+
+Default shaders can be assigned by material channel
+usage type, so that different channel combinations
+can be assigned different shaders.
+
+Tag on the other hand is material specific in its name.
+For example 'Default 1 FX=bump' is valid material name 
+using bump shader tag. Various parameters from Standard
+Material interface are exported, see individual 
+shader files for details.
+
+Map channels don't bind shader any way how the shader
+can use the data channels; it is free to interpret the data 
+any way it wants. This might be a bit confusing at first
+since there is two concepts which are kind of independent 
+of each other: 
+
+One thing is that what information is exported and 
+one thing is what the shaders assume from the input. For
+example currently all bump shaders assume that only Diffuse,
+Specular Level and Bump maps are in use, and that Diffuse 
+map alpha channel contains per pixel specular glossiness,
+and normal map alpha channel contains either transparency or
+self-illumination -information, depending on shader.
+However, each shader is plain text file and has documented list
+of parameters and how they are used, so from each shader
+you can check which 3dsmax map channels are needed.
+
+Note also that when using 3dsmax Standard Material
+and Bitmap channels, you CANNOT use UV Cropping/Tiling
+parameters which can be set in the Bitmap rollout.
+The exporter will give you an error message if the values
+are not in default settings.
+
+
+Lights
+------
+
+Following light properties are exported each light
+(shader parameter name in parenthesis):
+- Light Color (as LIGHTC)
+- Light Position (as LIGHTP)
+
+Light numbering (e.g. LIGHTC0-7) is not based on 3dsmax objects, 
+but object approximity with the light instead. So for example 
+LIGHTC0 is always the color of the closest light, and LIGHTC1 
+is always the color of the second closest light if any, etc.
+
+
+Fog
+---
+
+Fog is used in the scene if the 'Fog enabled' check box in the exporter
+dialog is checked as well while exporting the level. Note that you only need
+to enable the fog for the main level scene, e.g. separately exported
+characters don't need fog to be set, since only the level file scene fog
+settings are used.
+
+Fog uses 3dsmax Rendering -> Environment -> Background Color as fog color
+(there is also a comment about it in Exporter dialog box), and fog range is
+defined in the Exporter dialog. Fog is always linear, since its easier to
+control. Fog range on the other hand is not limited, in other words you can
+set fog start behind camera to create more subtle effect.
+
+Note that all export dialog options are saved next to target exported file,
+for example exported scene.hgr would have export config saved as
+scene.hgr.cfg, so you need to set them only once, and you can also check
+afterwards from the plain text cfg file which settings were used)
+
+Fog is independent of material. Only exception is unlit-tex-nofog shader,
+which ignores fog totally (it was done for skydome). Other nofog shaders can
+be easily added as well if needed.
+
+
+Known issues
+------------
+
+- Some plugins do not seem to cope well with 'Scale world units to meters' 
+  functionality -- you'll notice if this happens (scene 'explodes'
+  after export)
+
+
+Changes by version
+------------------
+
+0.2.1.0:
+- PNG reading support
+- Added skinning detection for Std material
+
+0.2.0.0:
+- Normal mapped lightmapping
+- Added separate lightmap flag for shader compilation
+- Added more error checks, (e.g. map channel type, std mtl crop mode, 
+  tiling mode, all material related errors are augmented with mesh list)
+- Added support for texture image file format conversion
+- Changed exporter default to result faster export times
+  (occlusion map calculation off by default)
+- Added support for negative animation range start
+- Better tangent space computation
+
+0.1.9.1:
+- Fixed error message about std material usage
+
+0.1.9.0:
+- Added 3dsmax7 support
+- Disabled note about Standard Material usage
+
+0.1.8:
+- Unlit materials can get lightmapped
+- Enabled shading texture generation also to Std material with explicit shader
+- Bugfix: Fixed reflection texmap extraction
+
+0.1.7.0:
+- Added install doc
+
+0.1.6.0:
+- Added reflection texture support
+
+0.1.5.0:
+- Lightmap support with direct lighting and ambient occlusion
+- Added 'Receive shadows' and 'Cast shadows' object property support
+- Added texture generation (removed hardcoded phong-20.png hack)
+- More robust vertex splitting
+- Added degenerate face removal
+- Better Standard material material ambient color handling
+- Collision=only objects -> Renderable=false, Cast/Receive shadows=false
+- Changed light format to use far attenuation
+- Bugfix: Fixed abort export crash
+
+0.1.4.2:
+- Bones no longer treated as exportable geometry
+
+0.1.4.1:
+- Added user property checking at export
+- Export vertex colors option is enabled by default
+- (Programmer info:) Now color component is always exported, check 
+  box only specifies if color is extracted from the 3dsmax channel
+
+0.1.4.0:
+- Added fog support
+
+0.1.3.2:
+- Fixed bug with upper/lower body biped splitting on 3dsmax5
+
+0.1.3.1:
+- Fixed bug with upper/lower body biped splitting on 3dsmax6
+
+0.1.3.0:
+- Added optional 'Animation only' export (in hgr 1.4)
+- Added more documentation about Standard Material usage
+
+0.1.2.4:
+- Modified 'Standard' type material default shader behaviour: If Bump map 
+  used but Specular Level map missing, 'phong-20.png' is used by default
+
+0.1.2.3:
+- Hidden objects are not exported anymore
+- Bugfix: Default plain material crashed exporter
+
+0.1.2.2:
+- Added support for default shader by used Standard Material map channels
+- Added scene specific export settings saving
+- Added early check if face has no material
+- Minor error message improvements (stdmtl, missing sub-mtl id, etc.)
+
+0.1.2.1:
+- Added shape export (in hgr 1.3)
+
+0.1.2.0:
+- Added 'DirectX 9 Shader' material export
+- Added node user property export (in hgr 1.2)
+- Added float shader value export (in hgr 1.2)
+
+0.1.1.1:
+- Bugfix: Fixed 'missing diffuse texture' error message
+- Added error message error handling
+
+0.1.1.0:
+- Added 3dsmax6 version
+- Added skinned character optimizer
+- Added hgr file format version 1.1 support
+
+0.1.0.0:
+- Initial version
+
+
+
+Copyright (C) 2005 Jani Kajala. All rights reserved. Consult your license regarding permissions and restrictions.

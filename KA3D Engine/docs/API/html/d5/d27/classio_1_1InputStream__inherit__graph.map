@@ -1,0 +1,6 @@
+base referer
+rect $d8/d25/classio_1_1ByteArrayInputStream.html 6,167 161,193
+rect $de/df1/classio_1_1FileInputStream.html 185,167 302,193
+rect $da/d4a/classio_1_1FilterInputStream.html 326,167 452,193
+rect $dc/d47/classlang_1_1Object.html 205,17 282,44
+rect $d9/ddc/classio_1_1DataInputStream.html 328,241 450,268
